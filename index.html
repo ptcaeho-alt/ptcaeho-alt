@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>ระบบเก็บเงินห้อง</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #f0f4f8;
+  --card: #ffffff;
+  --primary: #4CAF50;
+  --danger: #f44336;
+  --text: #333;
+  --radius: 14px;
+  --shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Prompt', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.container {
+  background: var(--card);
+  width: 100%;
+  max-width: 480px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 30px;
+}
+
+h1 {
+  text-align: center;
+  color: var(--primary);
+  margin-bottom: 20px;
+}
+
+/* QR */
+.qr-section {
+  text-align: center;
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 25px;
+}
+
+.qr-section p {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.qr-img {
+  width: 140px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* Form */
+label {
+  display: block;
+  margin-top: 15px;
+  font-weight: 600;
+  color: #555;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 12px 14px;
+  margin-top: 6px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* Buttons */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 25px;
+}
+
+button {
+  width: 48%;
+  padding: 14px;
+  font-size: 1rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+}
+
+.deposit { background: var(--primary); }
+.withdraw { background: var(--danger); }
+
+button:hover { opacity: 0.9; }
+
+/* Info */
+.log, .balance {
+  margin-top: 18px;
+  padding: 14px;
+  background: #f9fafb;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+.log { border-left: 4px solid var(--primary); }
+.balance { border-left: 4px solid #ff9800; }
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  background: #fff;
+  max-width: 360px;
+  margin: 25% auto;
+  padding: 20px;
+  border-radius: 14px;
+  text-align: center;
+}
+
+.close {
+  float: right;
+  cursor: pointer;
+  font-size: 22px;
+}
+
+#okButton {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h1>💰 ระบบเก็บเงินห้อง</h1>
+
+  <!-- QR -->
+  <div class="qr-section">
+    <p>สแกน QR เพื่อโอนเงิน</p>
+    <img class="qr-img"
+      src="https://media.discordapp.net/attachments/1443627625108082779/1462350726251679755/31d0e390-a98c-48a6-881c-744c82eb3a24.png?ex=696ddfbe&is=696c8e3e&hm=024f75d7bcd5e14cfed546830b7864d64a5b7e804fc9ed5316f21a1aa8d59d31&=&format=webp&quality=lossless"
+      alt="QR Code">
+  </div>
+
+  <label>ชื่อ</label>
+  <input id="name" placeholder="เช่น สมชาย">
+
+  <label>จำนวนเงิน (บาท)</label>
+  <input id="amount" type="number" placeholder="เช่น 100">
+
+  <label>หมายเหตุ</label>
+  <textarea id="note" rows="3"></textarea>
+
+  <div class="actions">
+    <button class="deposit" onclick="addSaving()">ฝากเงิน</button>
+    <button class="withdraw" onclick="withdrawSaving()">ถอนเงิน</button>
+  </div>
+
+  <div class="log" id="logContainer"></div>
+  <div class="balance" id="balanceContainer">ยอดเงินรวม: 0 บาท</div>
+</div>
+
+<!-- Modal -->
+<div id="successModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <p id="modalMessage"></p>
+    <button id="okButton">OK</button>
+  </div>
+</div>
+
+<script>
+const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1433128876749623427/qqYDNDseU2gKXg6gy2pUo6emd-DeSHowgtCrPrZc1KhWhI8swQIZd5FJVekRyPhLlh0R";
+let totalBalance = 0;
+
+const modal = document.getElementById("successModal");
+const modalMessage = document.getElementById("modalMessage");
+
+function showModal(msg){
+  modalMessage.textContent = msg;
+  modal.style.display = "block";
+}
+
+document.querySelector(".close").onclick =
+document.getElementById("okButton").onclick =
+() => modal.style.display = "none";
+
+function addSaving(){ handle("deposit"); }
+function withdrawSaving(){ handle("withdraw"); }
+
+function handle(type){
+  const name = nameInput.value.trim();
+  const amount = +amountInput.value;
+  const note = noteInput.value.trim();
+
+  if(!name || amount<=0){
+    showModal("กรุณากรอกข้อมูลให้ถูกต้อง");
+    return;
+  }
+  if(type==="withdraw" && amount>totalBalance){
+    showModal("ยอดเงินไม่พอ");
+    return;
+  }
+
+  totalBalance += type==="deposit"?amount:-amount;
+
+  logContainer.textContent =
+    `✅ ${name} ${type==="deposit"?"ฝาก":"ถอน"} ${amount} บาท ${note}`;
+
+  balanceContainer.textContent =
+    `ยอดเงินรวม: ${totalBalance} บาท`;
+
+  showModal("บันทึกสำเร็จ");
+
+  fetch(DISCORD_WEBHOOK_URL,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      embeds:[{
+        title:"💰 ระบบเก็บเงินห้อง",
+        color:type==="deposit"?3066993:15158332,
+        fields:[
+          {name:"ชื่อ",value:name,inline:true},
+          {name:"จำนวน",value:amount+" บาท",inline:true},
+          {name:"หมายเหตุ",value:note||"-"},
+          {name:"ยอดรวม",value:totalBalance+" บาท"}
+        ]
+      }]
+    })
+  });
+}
+
+const nameInput = document.getElementById("name");
+const amountInput = document.getElementById("amount");
+const noteInput = document.getElementById("note");
+const logContainer = document.getElementById("logContainer");
+const balanceContainer = document.getElementById("balanceContainer");
+</script>
+</body>
+</html>

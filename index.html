@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>ระบบเก็บเงินห้อง</title>
+<title>จ่ายเงินห้องเรียน</title>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
@@ -156,13 +156,13 @@ button:hover { opacity: 0.9; }
 
 <body>
 <div class="container">
-  <h1>💰 ระบบเก็บเงินห้อง</h1>
+  <h1>💰 จ่ายเงินห้องเรียน</h1>
 
   <!-- QR -->
   <div class="qr-section">
     <p>สแกน QR เพื่อโอนเงิน</p>
     <img class="qr-img"
-      src="https://img2.pic.in.th/65f97e8e-136b-4996-be28-3509ba00c4b8.md.jpg"
+      src="https://img5.pic.in.th/file/secure-sv1/2369ea33-0da6-4159-b2f1-2e89189af0ee.md.jpg"
       alt="QR Code">
   </div>
 
@@ -241,7 +241,7 @@ function handle(type){
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({
       embeds:[{
-        title:"💰 ระบบเก็บเงินห้อง",
+        title:"💰 จ่ายเงินห้องเรียน",
         color:type==="deposit"?3066993:15158332,
         fields:[
           {name:"ชื่อ",value:name,inline:true},
@@ -262,3 +262,4 @@ const balanceContainer = document.getElementById("balanceContainer");
 </script>
 </body>
 </html>
+
